@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- =============================================================== -->
+<!-- -->
+<!-- Maven2 Project Object Model -->
+<!-- -->
+<!-- =============================================================== -->
+<!-- | For more configuration information see the Maven website -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <packaging>jar</packaging>
+
+  <parent>
+    <groupId>net.agilhard.align</groupId>
+    <artifactId>agilhard-align-project</artifactId>
+    <version>1.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>net.agilhard.gui</groupId>
+  <artifactId>agilhard-vt100-terminal-emulation-swing</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>Agilhard GUI - VT100 Terminal Emulation Swing GUI</name>
+  <description>Agilhard GUI - VT100 Terminal Emulation Swing GUI</description>
+
+  <licenses>
+    <license>
+      <name>LGPL</name>
+      <url>http://www.gnu.org/licenses/lgpl.html</url>
+    </license>
+  </licenses>
+
+
+  <properties>
+    <rootBasedir>${project.parent.parent.basedir}</rootBasedir>
+  </properties>
+
+  <dependencies>
+    <!-- some external libs use commons logging replace that by jcl-over-slf4j -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>jcl-over-slf4j</artifactId>
+    </dependency>
+    <!-- logging api -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+    <!-- we want to configure / enable logging for the application -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>net.agilhard.gui</groupId>
+      <artifactId>agilhard-vt100-terminal-emulation-common</artifactId>
+    </dependency>
+
+  </dependencies>
+
+  <!-- Environment Information -->
+  <scm>
+    <developerConnection>scm:git:${scm.base.url}/agilhard-vt100-terminal-emulation-swing</developerConnection>
+  </scm>
+</project>
