@@ -186,7 +186,7 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
 
         this.brm.setRangeProperties(0, this.termSize.height, -scrollBuffer.getLineCount(), this.termSize.height, false);
 
-        this.normalFont = Font.decode("Monospaced-14");
+        this.normalFont = Font.decode("Monospaced");
         this.boldFont = this.normalFont.deriveFont(Font.BOLD);
 
         this.establishFontMetrics();
@@ -282,14 +282,13 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
     protected void adjustForFontSize() {
 	this.establishFontMetrics();
 	Dimension size=this.termSize;
-	this.termSize=new Dimension(0,0);
         this.setSize(this.doResize(size, null));
 	this.repaint();
     }
 
     public void setFontSize(float val) {
-	this.normalFont = this.normalFont.deriveFont(val);
-	this.boldFont = this.boldFont.deriveFont(val);
+	this.normalFont = new Font("monospaced", Font.PLAIN, (int) val);
+	this.boldFont= new Font("monospaced", Font.BOLD, (int) val);
 	this.adjustForFontSize();
     }
 
@@ -306,15 +305,16 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
     }
 
     public void increaseFontSize(float amount) {
-	this.normalFont = this.normalFont.deriveFont(this.normalFont.getSize2D()+amount);
-	this.boldFont = this.boldFont.deriveFont(this.boldFont.getSize2D()+amount);
+	this.normalFont = new Font("monospaced", Font.PLAIN, (int) ( this.normalFont.getSize2D() + amount));
+	this.boldFont = new Font("monospaced", Font.BOLD, (int) ( this.normalFont.getSize2D() + amount));
+
 	this.adjustForFontSize();
     }
 
     public void decreaseFontSize(float amount) {
-	this.establishFontMetrics();
-	this.normalFont = this.normalFont.deriveFont(this.normalFont.getSize2D()-amount);
-	this.boldFont = this.boldFont.deriveFont(this.boldFont.getSize2D()-amount);
+	this.normalFont = new Font("monospaced", Font.PLAIN, (int) ( this.normalFont.getSize2D() - amount));
+	this.boldFont = new Font("monospaced", Font.BOLD, (int) ( this.normalFont.getSize2D() - amount));
+
 	this.adjustForFontSize();
     }
 
@@ -536,7 +536,7 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
     /** {@inheritDoc} */
     @Override
     public Dimension doResize(final Dimension newSize, final RequestOrigin origin) {
-        if (!newSize.equals(this.termSize)) {
+        //if (!newSize.equals(this.termSize)) {
             this.backBuffer.lock();
             try {
                 this.backBuffer.doResize(newSize, origin);
@@ -556,7 +556,7 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
             } finally {
                 this.backBuffer.unlock();
             }
-        }
+        //}
         return new Dimension(this.getPixelWidth(), this.getPixelHeight());
     }
 
