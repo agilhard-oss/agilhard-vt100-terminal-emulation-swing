@@ -98,10 +98,10 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
     private final Component termComponent = this;
 
     /** The normal font. */
-    private final Font normalFont;
+    private Font normalFont;
 
     /** The bold font. */
-    private final Font boldFont;
+    private Font boldFont;
 
     /** The descent. */
     private int descent;
@@ -277,6 +277,45 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
         redrawTimer.start();
         this.repaint();
 
+    }
+
+    protected void adjustForFontSize() {
+	this.establishFontMetrics();
+	Dimension size=this.termSize;
+	this.termSize=new Dimension(0,0);
+        this.setSize(this.doResize(size, null));
+	this.repaint();
+    }
+
+    public void setFontSize(float val) {
+	this.normalFont = this.normalFont.deriveFont(val);
+	this.boldFont = this.boldFont.deriveFont(val);
+	this.adjustForFontSize();
+    }
+
+    public float getFontSize() {
+	return this.normalFont.getSize2D();
+    }
+
+    public Font getNormalFont() {
+	return this.normalFont;
+    }
+
+    public Font getBoldFont() {
+	return this.boldFont;
+    }
+
+    public void increaseFontSize(float amount) {
+	this.normalFont = this.normalFont.deriveFont(this.normalFont.getSize2D()+amount);
+	this.boldFont = this.boldFont.deriveFont(this.boldFont.getSize2D()+amount);
+	this.adjustForFontSize();
+    }
+
+    public void decreaseFontSize(float amount) {
+	this.establishFontMetrics();
+	this.normalFont = this.normalFont.deriveFont(this.normalFont.getSize2D()-amount);
+	this.boldFont = this.boldFont.deriveFont(this.boldFont.getSize2D()-amount);
+	this.adjustForFontSize();
     }
 
     /**
@@ -580,7 +619,7 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
         if (id == KeyEvent.KEY_PRESSED) {
             final int mod = e.getModifiers();
 
-            final char c = (char) e.getKeyCode();
+            final char c = (char) e.getKeyChar();
 
             if ((mod & Event.ALT_MASK) > 0 && !((mod & Event.CTRL_MASK) > 0)
                 && (c == 'T' || c == 'L' || c == 'O' || c == 'M' || c == 'S' || c == 'H' || c == 'D' || c == 'Q')
@@ -590,13 +629,17 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
                 return;
             }
 
-            if ((mod & Event.CTRL_MASK) > 0 && (mod & Event.SHIFT_MASK) > 0 && (c == 'C' || c == 'P')) {
+            if (((mod & Event.CTRL_MASK) > 0) && ((mod & Event.SHIFT_MASK) > 0) && (c == 'C' || c == 'P')) {
                 if (c == 'C') {
                     this.copyClipboard();
                 } else {
                     this.pasteClipboard();
                 }
 
+            } else if (((mod & Event.CTRL_MASK) > 0) && ((mod & Event.SHIFT_MASK) == 0) && (c == '+')) {
+		this.increaseFontSize(1.0f);
+            } else if (((mod & Event.CTRL_MASK) > 0) && ((mod & Event.SHIFT_MASK) == 0) && (c == '-')) {
+		this.decreaseFontSize(1.0f);
             } else if (this.keyHandler != null) {
                 this.keyHandler.keyPressed(e);
             }
@@ -609,6 +652,7 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
         }
         e.consume();
     }
+
 
     /**
      * Gets the pixel width.
