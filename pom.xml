@@ -36,22 +36,11 @@
   </properties>
 
   <dependencies>
-    <!-- some external libs use commons logging replace that by jcl-over-slf4j -->
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>jcl-over-slf4j</artifactId>
-    </dependency>
-    <!-- logging api -->
+
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
-    <!-- we want to configure / enable logging for the application -->
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>net.agilhard.gui</groupId>
       <artifactId>agilhard-vt100-terminal-emulation-common</artifactId>
