@@ -435,6 +435,7 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
 
       if (this.systemSelection == null) {
 	this.pasteClipboard();
+	return;
       }
       try {
 	final String selection = (String) this.systemSelection.getData(DataFlavor.stringFlavor);
