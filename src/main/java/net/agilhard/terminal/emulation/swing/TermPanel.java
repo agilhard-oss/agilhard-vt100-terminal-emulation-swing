@@ -435,6 +435,7 @@ public class TermPanel extends JComponent implements TerminalDisplay, ClipboardO
 
       if (this.systemSelection == null) {
 	this.pasteClipboard();
+	// BEI: INF-274 
 	return;
       }
       try {
