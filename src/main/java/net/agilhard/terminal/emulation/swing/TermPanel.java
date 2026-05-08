@@ -79,372 +79,380 @@ import net.agilhard.terminal.emulation.Util;
  */
 public class TermPanel extends JComponent implements TerminalDisplay, ClipboardOwner, StyledRunConsumer {
 
-    /** The Logger. */
-    private final Logger log = LoggerFactory.getLogger(TermPanel.class);
+  /** The Logger. */
+  private final Logger log = LoggerFactory.getLogger(TermPanel.class);
 
-    /** The Constant serialVersionUID. */
-    private static final long serialVersionUID = -1048763516632093014L;
+  /** The Constant serialVersionUID. */
+  private static final long serialVersionUID = -1048763516632093014L;
 
-    /** The Constant FPS. */
-    private static final double FPS = 20;
+  /** The Constant FPS. */
+  private static final double FPS = 20;
 
-    /** The img. */
-    private BufferedImage img;
+  /** The img. */
+  private BufferedImage img;
 
-    /** The gfx. */
-    private Graphics2D gfx;
+  /** The gfx. */
+  private Graphics2D gfx;
 
-    /** The term component. */
-    private final Component termComponent = this;
+  /** The term component. */
+  private final Component termComponent = this;
 
-    /** The normal font. */
-    private Font normalFont;
+  /** The normal font. */
+  private Font normalFont;
 
-    /** The bold font. */
-    private Font boldFont;
+  /** The bold font. */
+  private Font boldFont;
 
-    /** The descent. */
-    private int descent;
+  /** The descent. */
+  private int descent;
 
-    /** The line space. */
-    private int lineSpace;
+  /** The line space. */
+  private int lineSpace;
 
-    /** The char size. */
-    private final Dimension charSize = new Dimension();
+  /** The char size. */
+  private final Dimension charSize = new Dimension();
 
-    /** The term size. */
-    private Dimension termSize = new Dimension(80, 24);
+  /** The term size. */
+  private Dimension termSize = new Dimension(80, 24);
 
-    /** The cursor. */
-    private final Point cursor = new Point();
+  /** The cursor. */
+  private final Point cursor = new Point();
 
-    /** The antialiasing. */
-    private boolean antialiasing = true;
+  /** The antialiasing. */
+  private boolean antialiasing = true;
 
-    /** The emulator. */
-    private Emulator emulator;
+  /** The emulator. */
+  private Emulator emulator;
 
-    /** The selection start. */
-    private Point selectionStart;
+  /** The selection start. */
+  private Point selectionStart;
 
-    /** The selection end. */
-    private Point selectionEnd;
+  /** The selection end. */
+  private Point selectionEnd;
 
-    /** The selection in progress. */
-    private boolean selectionInProgress;
+  /** The selection in progress. */
+  private boolean selectionInProgress;
 
-    /** The clip board. */
-    private Clipboard systemClipBoard;
+  /** The clip board. */
+  private Clipboard systemClipBoard;
 
-    /** The clip board. */
-    private Clipboard systemSelection;
+  /** The clip board. */
+  private Clipboard systemSelection;
 
-    /** The resize panel delegate. */
-    private ResizePanelDelegate resizePanelDelegate;
+  /** The resize panel delegate. */
+  private ResizePanelDelegate resizePanelDelegate;
 
-    /** The back buffer. */
-    private final BackBuffer backBuffer;
+  /** The back buffer. */
+  private final BackBuffer backBuffer;
 
-    /** The scroll buffer. */
-    private final ScrollBuffer scrollBuffer;
+  /** The scroll buffer. */
+  private final ScrollBuffer scrollBuffer;
 
-    /** The style state. */
-    private final StyleState styleState;
+  /** The style state. */
+  private final StyleState styleState;
 
-    /** The brm. */
-    private final BoundedRangeModel brm = new DefaultBoundedRangeModel(0, 80, 0, 80);
+  /** The brm. */
+  private final BoundedRangeModel brm = new DefaultBoundedRangeModel(0, 80, 0, 80);
 
-    /** The client scroll origin. */
-    private int clientScrollOrigin;
+  /** The client scroll origin. */
+  private int clientScrollOrigin;
 
-    /** The new client scroll origin. */
-    private volatile int newClientScrollOrigin;
+  /** The new client scroll origin. */
+  private volatile int newClientScrollOrigin;
 
-    /** The should draw cursor. */
-    private volatile boolean shouldDrawCursor = true;
+  /** The should draw cursor. */
+  private volatile boolean shouldDrawCursor = true;
 
-    /** The key handler. */
-    private KeyListener keyHandler;
+  /** The key handler. */
+  private KeyListener keyHandler;
 
-    /** Selection Listeners. */
-    private final List<SelectionListener> selectionListeners = new ArrayList<>();
+  /** Selection Listeners. */
+  private final List<SelectionListener> selectionListeners = new ArrayList<>();
 
-    /**
-     * Instantiates a new term panel.
-     *
-     * @param backBuffer
-     *            the back buffer
-     * @param scrollBuffer
-     *            the scroll buffer
-     * @param styleState
-     *            the style state
-     */
-    public TermPanel(final BackBuffer backBuffer, final ScrollBuffer scrollBuffer, final StyleState styleState) {
-        this.scrollBuffer = scrollBuffer;
-        this.backBuffer = backBuffer;
-        this.styleState = styleState;
+  /**
+   * Instantiates a new term panel.
+   *
+   * @param backBuffer
+   *            the back buffer
+   * @param scrollBuffer
+   *            the scroll buffer
+   * @param styleState
+   *            the style state
+   */
+  public TermPanel(final BackBuffer backBuffer, final ScrollBuffer scrollBuffer, final StyleState styleState) {
+    this.scrollBuffer = scrollBuffer;
+    this.backBuffer = backBuffer;
+    this.styleState = styleState;
 
-        this.brm.setRangeProperties(0, this.termSize.height, -scrollBuffer.getLineCount(), this.termSize.height, false);
+    this.brm.setRangeProperties(0, this.termSize.height, -scrollBuffer.getLineCount(), this.termSize.height, false);
 
-        this.normalFont = Font.decode("Monospaced");
-        this.boldFont = this.normalFont.deriveFont(Font.BOLD);
+    this.normalFont = Font.decode("Monospaced");
+    this.boldFont = this.normalFont.deriveFont(Font.BOLD);
 
-        this.establishFontMetrics();
+    this.establishFontMetrics();
 
-        this.setUpImages();
-        this.setUpClipboard();
-        this.setAntiAliasing(this.antialiasing);
+    this.setUpImages();
+    this.setUpClipboard();
+    this.setAntiAliasing(this.antialiasing);
 
-        this.setPreferredSize(new Dimension(this.getPixelWidth(), this.getPixelHeight()));
+    this.setPreferredSize(new Dimension(this.getPixelWidth(), this.getPixelHeight()));
 
-        this.setFocusable(true);
-        this.enableInputMethods(true);
+    this.setFocusable(true);
+    this.enableInputMethods(true);
 
-        this.setFocusTraversalKeysEnabled(false);
+    this.setFocusTraversalKeysEnabled(false);
 
-        this.addMouseMotionListener(new MouseMotionAdapter() {
+    this.addMouseMotionListener(new MouseMotionAdapter() {
 
-            @SuppressWarnings("synthetic-access")
-            @Override
-            public void mouseDragged(final MouseEvent e) {
-                final Point charCoords = TermPanel.this.panelToCharCoords(e.getPoint());
+	@SuppressWarnings("synthetic-access")
+	@Override
+	public void mouseDragged(final MouseEvent e) {
+	  final Point charCoords = TermPanel.this.panelToCharCoords(e.getPoint());
 
-                if (!TermPanel.this.selectionInProgress) {
-                    TermPanel.this.selectionStart = new Point(charCoords);
-                    TermPanel.this.selectionInProgress = true;
-                }
-                TermPanel.this.repaint();
-                TermPanel.this.selectionEnd = charCoords;
-                TermPanel.this.selectionEnd.x =
-                    Math.min(TermPanel.this.selectionEnd.x + 1, TermPanel.this.termSize.width);
-            }
-        });
+	  if (!TermPanel.this.selectionInProgress) {
+	    TermPanel.this.selectionStart = new Point(charCoords);
+	    TermPanel.this.selectionInProgress = true;
+	  }
+	  TermPanel.this.repaint();
+	  TermPanel.this.selectionEnd = charCoords;
+	  TermPanel.this.selectionEnd.x =
+	    Math.min(TermPanel.this.selectionEnd.x + 1, TermPanel.this.termSize.width);
+	}
+      });
 
-        this.addMouseListener(new MouseAdapter() {
+    this.addMouseListener(new MouseAdapter() {
 
-            @SuppressWarnings({ "synthetic-access", "unused" })
-            @Override
-            public void mouseReleased(final MouseEvent e) {
-                TermPanel.this.selectionInProgress = false;
-                if (TermPanel.this.selectionStart != null && TermPanel.this.selectionEnd != null) {
-                    TermPanel.this.copySelection(TermPanel.this.selectionStart, TermPanel.this.selectionEnd);
-                    TermPanel.this.fireSelectionChanged();
-                }
-                TermPanel.this.repaint();
-            }
+	@SuppressWarnings({ "synthetic-access", "unused" })
+	@Override
+	public void mouseReleased(final MouseEvent e) {
+	  TermPanel.this.selectionInProgress = false;
+	  if (TermPanel.this.selectionStart != null && TermPanel.this.selectionEnd != null) {
+	    TermPanel.this.copySelection(TermPanel.this.selectionStart, TermPanel.this.selectionEnd);
+	    TermPanel.this.fireSelectionChanged();
+	  }
+	  TermPanel.this.repaint();
+	}
 
-            @SuppressWarnings("synthetic-access")
-            @Override
-            public void mouseClicked(final MouseEvent e) {
-                TermPanel.this.requestFocusInWindow();
-                TermPanel.this.selectionStart = null;
-                TermPanel.this.selectionEnd = null;
-                TermPanel.this.fireSelectionChanged();
-                if (e.getButton() == MouseEvent.BUTTON3) {
-                    TermPanel.this.pasteSelection();
-                }
-                TermPanel.this.repaint();
-            }
-        });
+	@SuppressWarnings("synthetic-access")
+	@Override
+	public void mouseClicked(final MouseEvent e) {
+	  TermPanel.this.requestFocusInWindow();
+	  TermPanel.this.selectionStart = null;
+	  TermPanel.this.selectionEnd = null;
+	  TermPanel.this.fireSelectionChanged();
+	  if (e.getButton() == MouseEvent.BUTTON3) {
+	    TermPanel.this.pasteSelection();
+	  }
+	  TermPanel.this.repaint();
+	}
+      });
 
-        this.addComponentListener(new ComponentAdapter() {
+    this.addComponentListener(new ComponentAdapter() {
 
-            @SuppressWarnings({ "synthetic-access", "unused" })
-            @Override
-            public void componentResized(final ComponentEvent e) {
-                TermPanel.this.sizeTerminalFromComponent();
-            }
-        });
+	@SuppressWarnings({ "synthetic-access", "unused" })
+	@Override
+	public void componentResized(final ComponentEvent e) {
+	  TermPanel.this.sizeTerminalFromComponent();
+	}
+      });
 
-        this.brm.addChangeListener(new ChangeListener() {
+    this.brm.addChangeListener(new ChangeListener() {
 
-            @SuppressWarnings({ "synthetic-access", "unused" })
-            @Override
-            public void stateChanged(final ChangeEvent e) {
-                TermPanel.this.newClientScrollOrigin = TermPanel.this.brm.getValue();
-            }
-        });
+	@SuppressWarnings({ "synthetic-access", "unused" })
+	@Override
+	public void stateChanged(final ChangeEvent e) {
+	  TermPanel.this.newClientScrollOrigin = TermPanel.this.brm.getValue();
+	}
+      });
 
-        final Timer redrawTimer = new Timer((int) (1000 / FPS), new ActionListener() {
+    final Timer redrawTimer = new Timer((int) (1000 / FPS), new ActionListener() {
 
-            @SuppressWarnings("unused")
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                TermPanel.this.redrawFromDamage();
-            }
-        });
-        this.setDoubleBuffered(true);
-        redrawTimer.start();
-        this.repaint();
+	@SuppressWarnings("unused")
+	@Override
+	public void actionPerformed(final ActionEvent e) {
+	  TermPanel.this.redrawFromDamage();
+	}
+      });
+    this.setDoubleBuffered(true);
+    redrawTimer.start();
+    this.repaint();
+
+  }
+
+  protected void adjustForFontSize() {
+    this.establishFontMetrics();
+    Dimension size=this.termSize;
+    this.setSize(this.doResize(size, null));
+    this.repaint();
+  }
+
+  public void setFontSize(float val) {
+    this.normalFont = new Font("monospaced", Font.PLAIN, (int) val);
+    this.boldFont= new Font("monospaced", Font.BOLD, (int) val);
+    this.adjustForFontSize();
+  }
+
+  public float getFontSize() {
+    return this.normalFont.getSize2D();
+  }
+
+  public Font getNormalFont() {
+    return this.normalFont;
+  }
+
+  public Font getBoldFont() {
+    return this.boldFont;
+  }
+
+  public void increaseFontSize(float amount) {
+    this.normalFont = new Font("monospaced", Font.PLAIN, (int) ( this.normalFont.getSize2D() + amount));
+    this.boldFont = new Font("monospaced", Font.BOLD, (int) ( this.normalFont.getSize2D() + amount));
+
+    this.adjustForFontSize();
+  }
+
+  public void decreaseFontSize(float amount) {
+    this.normalFont = new Font("monospaced", Font.PLAIN, (int) ( this.normalFont.getSize2D() - amount));
+    this.boldFont = new Font("monospaced", Font.BOLD, (int) ( this.normalFont.getSize2D() - amount));
+
+    this.adjustForFontSize();
+  }
+
+  /**
+   * Panel to char coords.
+   *
+   * @param p
+   *            the p
+   * @return the point
+   */
+  private Point panelToCharCoords(final Point p) {
+    return new Point(p.x / this.charSize.width, p.y / this.charSize.height + this.clientScrollOrigin);
+  }
+
+  /**
+   * Sets the up clipboard.
+   */
+  void setUpClipboard() {
+    // BEI: INF-274 NPE synchronize to fix
+    synchronized(this) { 
+      this.systemSelection = Toolkit.getDefaultToolkit().getSystemSelection();
+      this.systemClipBoard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    }
+  }
+
+  /**
+   * Copy selection.
+   *
+   * @param csSelectionStart
+   *            the cs_selection start
+   * @param csSelectionEnd
+   *            the cs_selection end
+   * @param cb
+   *            the Clipboard
+   */
+  private void copyClipboard(final Point csSelectionStart, final Point csSelectionEnd, final Clipboard cb) {
+
+    if (csSelectionStart == null || csSelectionEnd == null) {
+      return;
+    }
+
+    Point top;
+    Point bottom;
+
+    if (csSelectionStart.y == csSelectionEnd.y) {
+      /* same line */
+      top = csSelectionStart.x < csSelectionEnd.x ? csSelectionStart : csSelectionEnd;
+      bottom = csSelectionStart.x >= csSelectionEnd.x ? csSelectionStart : csSelectionEnd;
+    } else {
+      top = csSelectionStart.y < csSelectionEnd.y ? csSelectionStart : csSelectionEnd;
+      bottom = csSelectionStart.y > csSelectionEnd.y ? csSelectionStart : csSelectionEnd;
+    }
+
+    final StringBuffer selection = new StringBuffer();
+    if (top.y < 0) {
+      final Point scrollEnd = bottom.y >= 0 ? new Point(this.termSize.width, -1) : bottom;
+      this.scrollBuffer.pumpRuns(top.y, scrollEnd.y - top.y, new SelectionRunConsumer(selection, top, scrollEnd));
 
     }
 
-    protected void adjustForFontSize() {
-	this.establishFontMetrics();
-	Dimension size=this.termSize;
-        this.setSize(this.doResize(size, null));
-	this.repaint();
+    if (bottom.y >= 0) {
+      final Point backBegin = top.y < 0 ? new Point(0, 0) : top;
+      this.backBuffer.pumpRuns(0, backBegin.y, this.termSize.width, bottom.y - backBegin.y + 1,
+			       new SelectionRunConsumer(selection, backBegin, bottom));
     }
 
-    public void setFontSize(float val) {
-	this.normalFont = new Font("monospaced", Font.PLAIN, (int) val);
-	this.boldFont= new Font("monospaced", Font.BOLD, (int) val);
-	this.adjustForFontSize();
+    if (selection.length() == 0) {
+      return;
     }
 
-    public float getFontSize() {
-	return this.normalFont.getSize2D();
+    try {
+      cb.setContents(new StringSelection(selection.toString()), this);
     }
-
-    public Font getNormalFont() {
-	return this.normalFont;
+    catch (final IllegalStateException e) {
+      this.log.error("Could not set clipboard:", e);
     }
+  }
 
-    public Font getBoldFont() {
-	return this.boldFont;
+  /**
+   * Copy selection.
+   *
+   * @param csSelectionStart
+   *            the cs_selection start
+   * @param csSelectionEnd
+   *            the cs_selection end
+   */
+  private void copySelection(final Point csSelectionStart, final Point csSelectionEnd) {
+    this.copyClipboard(csSelectionStart, csSelectionEnd,
+		       this.systemSelection != null ? this.systemSelection : this.systemClipBoard);
+  }
+
+  /**
+   * Copy clipboard.
+   *
+   * @param csSelectionStart
+   *            the cs_selection start
+   * @param csSelectionEnd
+   *            the cs_selection end
+   */
+  private void copyClipboard(final Point csSelectionStart, final Point csSelectionEnd) {
+    this.copyClipboard(csSelectionStart, csSelectionEnd, this.systemClipBoard);
+  }
+
+  /**
+   * Copy clipboard.
+   */
+  public void copyClipboard() {
+    this.copyClipboard(this.selectionStart, this.selectionEnd);
+  }
+
+  /**
+   * Paste selection.
+   */
+  public void pasteSelection() {
+
+    // BEI: INF-274 NPE synchronize to fix
+    synchronized(this) {
+
+      if (this.systemSelection == null) {
+	this.pasteClipboard();
+      }
+      try {
+	final String selection = (String) this.systemSelection.getData(DataFlavor.stringFlavor);
+	this.emulator.sendBytes(selection.getBytes());
+      }
+      catch (final UnsupportedFlavorException e) {
+	this.log.debug("unsupported flavor in paste", e);
+      }
+      catch (final IOException e) {
+	this.log.debug("I/O error in paste", e);
+      }
     }
+  }
 
-    public void increaseFontSize(float amount) {
-	this.normalFont = new Font("monospaced", Font.PLAIN, (int) ( this.normalFont.getSize2D() + amount));
-	this.boldFont = new Font("monospaced", Font.BOLD, (int) ( this.normalFont.getSize2D() + amount));
-
-	this.adjustForFontSize();
-    }
-
-    public void decreaseFontSize(float amount) {
-	this.normalFont = new Font("monospaced", Font.PLAIN, (int) ( this.normalFont.getSize2D() - amount));
-	this.boldFont = new Font("monospaced", Font.BOLD, (int) ( this.normalFont.getSize2D() - amount));
-
-	this.adjustForFontSize();
-    }
-
-    /**
-     * Panel to char coords.
-     *
-     * @param p
-     *            the p
-     * @return the point
-     */
-    private Point panelToCharCoords(final Point p) {
-        return new Point(p.x / this.charSize.width, p.y / this.charSize.height + this.clientScrollOrigin);
-    }
-
-    /**
-     * Sets the up clipboard.
-     */
-    void setUpClipboard() {
-        this.systemSelection = Toolkit.getDefaultToolkit().getSystemSelection();
-        this.systemClipBoard = Toolkit.getDefaultToolkit().getSystemClipboard();
-    }
-
-    /**
-     * Copy selection.
-     *
-     * @param csSelectionStart
-     *            the cs_selection start
-     * @param csSelectionEnd
-     *            the cs_selection end
-     * @param cb
-     *            the Clipboard
-     */
-    private void copyClipboard(final Point csSelectionStart, final Point csSelectionEnd, final Clipboard cb) {
-
-        if (csSelectionStart == null || csSelectionEnd == null) {
-            return;
-        }
-
-        Point top;
-        Point bottom;
-
-        if (csSelectionStart.y == csSelectionEnd.y) {
-            /* same line */
-            top = csSelectionStart.x < csSelectionEnd.x ? csSelectionStart : csSelectionEnd;
-            bottom = csSelectionStart.x >= csSelectionEnd.x ? csSelectionStart : csSelectionEnd;
-        } else {
-            top = csSelectionStart.y < csSelectionEnd.y ? csSelectionStart : csSelectionEnd;
-            bottom = csSelectionStart.y > csSelectionEnd.y ? csSelectionStart : csSelectionEnd;
-        }
-
-        final StringBuffer selection = new StringBuffer();
-        if (top.y < 0) {
-            final Point scrollEnd = bottom.y >= 0 ? new Point(this.termSize.width, -1) : bottom;
-            this.scrollBuffer.pumpRuns(top.y, scrollEnd.y - top.y, new SelectionRunConsumer(selection, top, scrollEnd));
-
-        }
-
-        if (bottom.y >= 0) {
-            final Point backBegin = top.y < 0 ? new Point(0, 0) : top;
-            this.backBuffer.pumpRuns(0, backBegin.y, this.termSize.width, bottom.y - backBegin.y + 1,
-                new SelectionRunConsumer(selection, backBegin, bottom));
-        }
-
-        if (selection.length() == 0) {
-            return;
-        }
-
-        try {
-            cb.setContents(new StringSelection(selection.toString()), this);
-        }
-        catch (final IllegalStateException e) {
-            this.log.error("Could not set clipboard:", e);
-        }
-    }
-
-    /**
-     * Copy selection.
-     *
-     * @param csSelectionStart
-     *            the cs_selection start
-     * @param csSelectionEnd
-     *            the cs_selection end
-     */
-    private void copySelection(final Point csSelectionStart, final Point csSelectionEnd) {
-        this.copyClipboard(csSelectionStart, csSelectionEnd,
-            this.systemSelection != null ? this.systemSelection : this.systemClipBoard);
-    }
-
-    /**
-     * Copy clipboard.
-     *
-     * @param csSelectionStart
-     *            the cs_selection start
-     * @param csSelectionEnd
-     *            the cs_selection end
-     */
-    private void copyClipboard(final Point csSelectionStart, final Point csSelectionEnd) {
-        this.copyClipboard(csSelectionStart, csSelectionEnd, this.systemClipBoard);
-    }
-
-    /**
-     * Copy clipboard.
-     */
-    public void copyClipboard() {
-        this.copyClipboard(this.selectionStart, this.selectionEnd);
-    }
-
-    /**
-     * Paste selection.
-     */
-    public void pasteSelection() {
-        if (this.systemSelection == null) {
-            this.pasteClipboard();
-        }
-        try {
-            final String selection = (String) this.systemSelection.getData(DataFlavor.stringFlavor);
-            this.emulator.sendBytes(selection.getBytes());
-        }
-        catch (final UnsupportedFlavorException e) {
-            this.log.debug("unsupported flavor in paste", e);
-        }
-        catch (final IOException e) {
-            this.log.debug("I/O error in paste", e);
-        }
-    }
-
-    /**
-     * Paste selection.
-     */
-    public void pasteClipboard() {
+  /**
+   * Paste selection.
+   */
+  public void pasteClipboard() {
         try {
             final String selection = (String) this.systemClipBoard.getData(DataFlavor.stringFlavor);
             this.emulator.sendBytes(selection.getBytes());
